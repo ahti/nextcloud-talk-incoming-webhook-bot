@@ -1,0 +1,17 @@
+services:
+  nextcloud:
+    image: nextcloud:32-apache
+    ports:
+      - "8082:80"
+    volumes:
+      - nextcloud_data:/var/www/html
+      # need to comment this for initial setup to work
+      - .:/var/www/html/apps/talk_webhooks:ro
+    environment:
+      - NEXTCLOUD_ADMIN_USER=admin
+      - NEXTCLOUD_ADMIN_PASSWORD=admin
+      - NEXTCLOUD_TRUSTED_DOMAINS=localhost
+    restart: unless-stopped
+
+volumes:
+  nextcloud_data:
