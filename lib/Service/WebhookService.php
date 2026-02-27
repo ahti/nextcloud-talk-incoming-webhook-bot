@@ -7,6 +7,7 @@ namespace OCA\TalkWebhooks\Service;
 use OCA\Talk\Chat\ChatManager;
 use OCA\Talk\Model\Attendee;
 use OCA\Talk\Manager;
+use OCA\TalkWebhooks\AppInfo\Application;
 use OCA\TalkWebhooks\Db\Webhook;
 use OCA\TalkWebhooks\Db\WebhookMapper;
 use OCP\AppFramework\Http;
@@ -17,7 +18,7 @@ use OCP\Server;
 use Psr\Log\LoggerInterface;
 
 final class WebhookService {
-	private const BOT_URL = 'nextcloudapp://talk_webhooks';
+	private const BOT_URL = 'nextcloudapp://' . Application::APP_ID;
 	private const DEFAULT_SECRET_LENGTH = 32;
 	private const MAX_NAME_LENGTH = 128;
 
@@ -112,7 +113,7 @@ final class WebhookService {
 
 	public function getWebhookUrl(Webhook $webhook): string {
 		return $this->urlGenerator->getAbsoluteURL(
-			'/apps/talk_webhooks/api/v1/webhook/' . $webhook->getId()
+			'/apps/' . Application::APP_ID . '/api/v1/webhook/' . $webhook->getId()
 		);
 	}
 
