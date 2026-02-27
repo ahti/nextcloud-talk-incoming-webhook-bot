@@ -54,12 +54,16 @@ final class BotInvokeListener implements IEventListener {
 			return;
 		}
 
-		$response = match ($subcommand) {
-			'create' => $this->handleCreate($channelToken, $subArgs),
-			'list' => $this->handleList($channelToken),
-			'delete' => $this->handleDelete($channelToken, $subArgs),
-			default => $this->getHelpText(),
-		};
+		try {
+			$response = match ($subcommand) {
+				'create' => $this->handleCreate($channelToken, $subArgs),
+				'list' => $this->handleList($channelToken),
+				'delete' => $this->handleDelete($channelToken, $subArgs),
+				default => $this->getHelpText(),
+			};
+		} catch (\Exception $e) {
+			$response = 'An error occurred while processing your request. Please try again.';
+		}
 
 		$event->addAnswer($response);
 	}
@@ -77,7 +81,11 @@ final class BotInvokeListener implements IEventListener {
 			return 'Error: Invalid hash format. Provide a bcrypt hash (e.g. $2y$10$...) or leave empty to auto-generate.';
 		}
 
-		$result = $this->webhookService->create($channelToken, $name, $secretHash);
+		try {
+			$result = $this->webhookService->create($channelToken, $name, $secretHash);
+		} catch (\InvalidArgumentException $e) {
+			return 'Error: ' . $e->getMessage();
+		}
 		
 		$webhook = $result['webhook'];
 		$generatedSecret = $result['secret'];
@@ -148,24 +156,16 @@ final class BotInvokeListener implements IEventListener {
 
 	private function handleDelete(string $channelToken, string $hookId): string {
 		$intId = filter_var($hookId, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
-		// if ($intId === null) {
-		// 	return 'Usage: /webhook delete <hook_id>';
-		// }
-		$found = null;
-		$webhooks = $this->webhookService->listByChannel($channelToken);
-		
-		foreach ($webhooks as $webhook) {
-			if ($webhook->getId() === $intId) {
-				$found = $webhook;
-				break;
-			}
+		if ($intId === null) {
+			return 'Usage: /webhook delete <hook_id>';
 		}
-
-		if ($found === null) {
-			return 'Webhook not found.';
-		}
-
-		$this->webhookService->delete($found->getId());
+        
+		$deleted = $this->webhookService->delete($intId, $channelToken);
+        
+        if (!$deleted) {
+            return 'Webhook not found.';
+        }
+        
 		return 'Webhook deleted.';
 	}
 

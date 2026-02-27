@@ -8,6 +8,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
+use OCP\DB\Types;
 use OCP\IDBConnection;
 
 /**
@@ -36,12 +37,12 @@ final class WebhookMapper extends QBMapper {
 	/**
 	 * @throws Exception
 	 */
-	public function findById(string $id): ?Webhook {
+	public function findById(int $id): ?Webhook {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
 			->where(
-				$qb->expr()->eq('id', $qb->createNamedParameter($id))
+				$qb->expr()->eq('id', $qb->createNamedParameter($id, Types::INTEGER))
 			);
 		try {
 			return $this->findEntity($qb);

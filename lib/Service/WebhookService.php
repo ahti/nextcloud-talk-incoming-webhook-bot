@@ -19,6 +19,7 @@ use Psr\Log\LoggerInterface;
 final class WebhookService {
 	private const BOT_URL = 'nextcloudapp://talk_webhooks';
 	private const DEFAULT_SECRET_LENGTH = 32;
+	private const MAX_NAME_LENGTH = 128;
 
 	/** @psalm-suppress PossiblyUnusedMethod Called by DI */
 	public function __construct(
@@ -33,6 +34,10 @@ final class WebhookService {
 	 * @return array{webhook: Webhook, secret: string|null}
 	 */
 	public function create(string $channelToken, string $name = '', ?string $secretHash = null): array {
+		if (strlen($name) > self::MAX_NAME_LENGTH) {
+			throw new \InvalidArgumentException('Webhook name exceeds maximum length of ' . self::MAX_NAME_LENGTH . ' characters');
+		}
+
 		$webhook = new Webhook();
 		$webhook->setChannelToken($channelToken);
 		$webhook->setName($name);
@@ -48,6 +53,12 @@ final class WebhookService {
 		$webhook->setCreatedAt(time());
 
 		$this->mapper->insert($webhook);
+
+		$this->logger->info('Webhook created', [
+			'webhookId' => $webhook->getId(),
+			'channelToken' => $channelToken,
+			'name' => $name,
+		]);
 
 		return [
 			'webhook' => $webhook,
@@ -70,16 +81,24 @@ final class WebhookService {
 		return $this->mapper->findByChannelToken($channelToken);
 	}
 
-	public function delete(int $webhookId): void {
-		$webhook = $this->mapper->findById((string)$webhookId);
-		if ($webhook === null) {
-			return;
+	public function delete(int $webhookId, string $channelToken): bool {
+		$webhook = $this->mapper->findById($webhookId);
+		if ($webhook === null  || $webhook->getChannelToken() !== $channelToken) {
+			return false;
 		}
+
 		$this->mapper->delete($webhook);
+
+		$this->logger->info('Webhook deleted', [
+			'webhookId' => $webhookId,
+			'channelToken' => $channelToken,
+		]);
+        
+        return true;
 	}
 
 	public function findByIdAndSecret(int $hookId, string $secret): ?Webhook {
-		$webhook = $this->mapper->findById((string)$hookId);
+		$webhook = $this->mapper->findById($hookId);
 		if ($webhook === null) {
 			return null;
 		}
@@ -124,6 +143,7 @@ final class WebhookService {
 		} catch (\Exception $e) {
 			$this->logger->error('Failed to send message to Talk', [
 				'exception' => $e,
+				'channelToken' => $channelToken,
 			]);
 			return new DataResponse(
 				['error' => 'Failed to send message. Check Nextcloud log for more.'],
