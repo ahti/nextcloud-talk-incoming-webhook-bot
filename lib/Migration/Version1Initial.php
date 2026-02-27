@@ -46,7 +46,7 @@ final class Version1Initial extends SimpleMigrationStep {
 			]);
 
 			$table->setPrimaryKey(['id']);
-			$table->addUniqueIndex(['channel_token', 'secret_hash'], 'twh_channel_secret_idx');
+			$table->addIndex(['channel_token'], 'twh_channel_idx');
 		}
 
 		return $schema;
