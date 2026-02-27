@@ -51,7 +51,7 @@ final class InstallBot implements IRepairStep {
 			'Manage incoming webhooks for this channel. Use /webhook create, /webhook list, /webhook delete',
 			Bot::FEATURE_EVENT
 		);
-        
+
 		$this->dispatcher->dispatchTyped($event);
 	}
 }

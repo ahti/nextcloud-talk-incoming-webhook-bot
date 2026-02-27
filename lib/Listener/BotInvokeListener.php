@@ -159,13 +159,13 @@ final class BotInvokeListener implements IEventListener {
 		if ($intId === null) {
 			return 'Usage: /webhook delete <hook_id>';
 		}
-        
+
 		$deleted = $this->webhookService->delete($intId, $channelToken);
-        
-        if (!$deleted) {
-            return 'Webhook not found.';
-        }
-        
+
+		if (!$deleted) {
+			return 'Webhook not found.';
+		}
+
 		return 'Webhook deleted.';
 	}
 

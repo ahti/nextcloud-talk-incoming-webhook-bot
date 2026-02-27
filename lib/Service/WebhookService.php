@@ -94,8 +94,8 @@ final class WebhookService {
 			'webhookId' => $webhookId,
 			'channelToken' => $channelToken,
 		]);
-        
-        return true;
+		
+		return true;
 	}
 
 	public function findByIdAndSecret(int $hookId, string $secret): ?Webhook {
